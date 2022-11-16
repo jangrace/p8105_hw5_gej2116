@@ -51,7 +51,7 @@ The homicide data contains `r nrow(hom_df)` observations and `r ncol(hom_df)` va
 
 ### Number of Homicides and Unsolved Cases in Each City, State
 
-```{r}
+```{r org_data}
 hom_df = hom_df %>% 
   mutate(city_state = str_c(city, state, sep = ", "))
 
@@ -68,4 +68,17 @@ summ = left_join(n_homicide, n_unsolved, by = "city_state")
 knitr::kable(summ)
 ```
 
+### Baltimore, MD: Proportion of Unsolved Homicide Cases
+
+```{r MD_unsolved}
+MD_unsolved = summ %>% 
+  filter(city_state == "Baltimore, MD")
+
+MD_prop = prop.test(MD_unsolved %>%  pull(n_unsolved), MD_unsolved %>% pull(n_homicide)) %>% 
+  broom::tidy()
+
+MD_prop
+```
+
+64.6% (95% CI: 62.8%, 66.3%) of reported homicides in Baltimore, MD are unsolved cases.
 
