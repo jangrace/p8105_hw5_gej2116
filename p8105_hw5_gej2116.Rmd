@@ -53,18 +53,19 @@ The homicide data contains `r nrow(hom_df)` observations and `r ncol(hom_df)` va
 
 ```{r org_data}
 hom_df = hom_df %>% 
-  mutate(city_state = str_c(city, state, sep = ", "))
+  mutate(city_state = str_c(city, state, sep = ", ")) %>% 
+  filter(city_state !="Tulsa, AL")
 
-n_homicide = hom_df %>% 
+homicide = hom_df %>% 
   group_by(city_state) %>% 
-  summarize(n_homicide = n())
+  summarize(total = n())
 
-n_unsolved = hom_df %>% 
+unsolved = hom_df %>% 
   filter(disposition %in% c("Closed without arrest", "Open/No arrest")) %>% 
   group_by(city_state) %>% 
-  summarize(n_unsolved = n())
+  summarize(unsolved = n())
 
-summ = left_join(n_homicide, n_unsolved, by = "city_state") 
+summ = left_join(homicide, unsolved, by = "city_state") 
 knitr::kable(summ)
 ```
 
@@ -74,11 +75,40 @@ knitr::kable(summ)
 MD_unsolved = summ %>% 
   filter(city_state == "Baltimore, MD")
 
-MD_prop = prop.test(MD_unsolved %>%  pull(n_unsolved), MD_unsolved %>% pull(n_homicide)) %>% 
+MD_prop = prop.test(MD_unsolved %>%  pull(unsolved), MD_unsolved %>% pull(total)) %>% 
   broom::tidy()
 
 MD_prop
 ```
 
 64.6% (95% CI: 62.8%, 66.3%) of reported homicides in Baltimore, MD are unsolved cases.
+
+### Proportion of Unsolved Cases in Each City
+
+```{r function,iteration}
+prop_fx1 = function(x_unsolved, n_total) {
+
+prop_fx2 = 
+  prop.test(
+    x = x_unsolved, n = n_total, 
+    p = NULL, alternative = c("two.sided", "less", "greater"), 
+    conf.level = .95, 
+    correct = TRUE) %>% 
+  broom::tidy() %>%
+    select(estimate, conf.low, conf.high)
+
+prop_fx2
+}
+
+city_summ = summ %>% 
+  mutate(
+    prop_unsolved = 
+      map2(.x = unsolved, .y = total, ~prop_fx1(x = .x, n = .y))) %>% 
+  unnest(prop_unsolved)
+
+city_summ
+```
+
+
+
 
