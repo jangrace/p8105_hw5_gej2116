@@ -136,3 +136,36 @@ plot = city_summ %>%
 
 print(plot)
 ```
+
+## Problem 3
+
+### Simulation 
+
+```{r element}
+sim_fx = function(n_obs = 30, mu = 0, sigma = 5){
+  sim_data =
+    tibble(x = rnorm(n = n_obs, mean = mu, sd = sigma))
+
+sim_data %>% summarize(
+  mu_hat = mean(x),
+  p_value = t.test(x, conf.level = .95)$p.value)
+}
+
+mu = 0
+output_lists = map(.x = mu, ~rerun(5000, sim_fx(mu = .x)))
+```
+
+### Repeating for different mu's
+
+```{r 5000}
+sim_df =
+  tibble(mu = c(1,2,3,4,5,6)) %>% 
+  mutate(
+    output_lists = map(.x = mu, ~rerun(5000, sim_fx(mu = .x))),
+    estimate_dfs = map(output_lists, bind_rows)) %>% 
+  select(-output_lists) %>% 
+  unnest(estimate_dfs) %>% 
+  mutate(reject = ifelse(p_value < .5, 'reject', 'fail to reject'))
+```
+
+
