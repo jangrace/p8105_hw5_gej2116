@@ -28,10 +28,6 @@ scale_colour_discrete = scale_colour_viridis_d
 scale_fill_discrete = scale_fill_viridis_d
 ```
 
-## Problem 1
-
-Did not include as it isn't graded.
-
 ## Problem 2
 
 ### Import CSV
@@ -43,13 +39,21 @@ hom_df =
 
 ### Raw Data Description
 
-```{r skim, echo=T, results='hide'}
+```{r skim, include = FALSE}
 skimr::skim(hom_df)
 ```
 
-The homicide data contains `r nrow(hom_df)` observations and `r ncol(hom_df)` variables. For each reported case of homicide, the dataset provides victim's name, race, age, sex, location (city, state, latitude, and longitude), and disposition.
+The data contains `r nrow(hom_df)` observations and `r ncol(hom_df)` variables. For each reported case of homicide, it provides victim's name, race, age, sex, location (city, state, latitude, and longitude), and disposition.
 
-### Number of Homicides and Unsolved Cases in Each City, State
+### Number of Homicides and Unsolved Cases in Each City
+
+Following steps were taken to find the total number of homicides and unsolved cases in each city:
+1. Created a new variable called "city_state"
+2. Removed invalid data ("Tulsa, AL")
+3. Created a data frame that summarizes the total # of homicide cases in each city
+4. Created a data frame that summarizes the total # of unsolved cases in each city
+5. Merged the two data frames
+6. Printed a table with a summary of # of homicide and unsolved cases in each city
 
 ```{r org_data}
 hom_df = hom_df %>% 
@@ -71,6 +75,10 @@ knitr::kable(summ)
 
 ### Baltimore, MD: Proportion of Unsolved Homicide Cases
 
+To find the propotion of unsolved cases in Baltimore MD,
+1. Filtered the dataset created in previous step so only information for Baltimore, MD is included
+2. Used `prop.test` and `broom::tidy` to find test proporitons
+
 ```{r MD_unsolved}
 MD_unsolved = summ %>% 
   filter(city_state == "Baltimore, MD")
@@ -84,6 +92,9 @@ MD_prop
 64.6% (95% CI: 62.8%, 66.3%) of reported homicides in Baltimore, MD are unsolved cases.
 
 ### Proportion of Unsolved Cases in Each City
+To generate a data frame that provides proportion of unsolved cases in each city
+1. Created a function (prop_fx1) that can be used for iteration
+2. Applied the function to the summ data frame which was created earlier
 
 ```{r function,iteration}
 prop_fx1 = function(x_unsolved, n_total) {
@@ -109,6 +120,19 @@ city_summ = summ %>%
 city_summ
 ```
 
+### Plot
 
+```{r ggplot}
+plot = city_summ %>% 
+  ggplot(aes(x = fct_reorder(city_state, estimate), y = estimate)) +
+  geom_point() +
+  geom_errorbar(aes(ymin = conf.low, ymax = conf.high)) +
+  labs(
+    title = "Unsolved Homicide Cases in the United States",
+    x = "Location (city, state)", 
+    y = "Proportion of Unsolved Cases"
+    ) +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0, hjust = 1))
 
-
+print(plot)
+```
