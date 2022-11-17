@@ -168,4 +168,31 @@ sim_df =
   mutate(reject = ifelse(p_value < .5, 'reject', 'fail to reject'))
 ```
 
+### Plots
+
+```{r plots}
+plot1 = sim_df %>% 
+  ggplot(aes(x = mu, fill = reject)) +
+  geom_bar(position = "fill") +
+  lab(x = "mu", y = "% rejected")
+
+plot1
+
+plot2 = sim_df %>% 
+  group_by(mu) %>% 
+  summarize(vars(mu_hat), list(mu_est = mean)) %>% 
+  ggplot(aes(x = mu, y = mu_est)) +
+  geom_point() +
+  lab( x = "mu", y = "mu_hat estimate")
+
+plot3 = sim_df %>% 
+  filter(reject == 'reject') %>% 
+  group_by(mu) %>% 
+  summrize(vars(mu_hat), list(n_mean = mean)) %>% 
+  ggplot(aes(x = mu, y = n_mean)) +
+  geom_point() +
+  labs(x = "true mu", y = "sample mean")
+  
+```
+
 
